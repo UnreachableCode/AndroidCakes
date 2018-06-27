@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
      * Improve any performance issues
      * Use good coding practices to make code more secure
      */
-    public static class PlaceholderFragment extends ListFragment {
+    public static class PlaceholderFragment extends ListFragment implements CakeResultHandler{
 
         private static final String TAG = PlaceholderFragment.class.getSimpleName();
 
@@ -97,40 +97,15 @@ public class MainActivity extends AppCompatActivity {
             mListView.setAdapter(mAdapter);
 
             // Load data from net.
-            try {
-                JSONArray array = loadData();
-                mAdapter.setItems(array);
-            } catch (IOException | JSONException e) {
-                Log.e(TAG, e.getMessage());
-            }
+            //try {
+                new CakeService(this).execute(JSON_URL);
+            //} catch (IOException | JSONException e) {
+            //    Log.e(TAG, e.getMessage());
+            //}
         }
 
 
-        private JSONArray loadData() throws IOException, JSONException {
-            URL url = new URL(JSON_URL);
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            try {
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
 
-                // Can you think of a way to improve the performance of loading data
-                // using HTTP headers???
-
-                // Also, Do you trust any utils thrown your way????
-
-                byte[] bytes = StreamUtils.readUnknownFully(in);
-
-                // Read in charset of HTTP content.
-                String charset = parseCharset(urlConnection.getRequestProperty("Content-Type"));
-
-                // Convert byte array to appropriate encoded string.
-                String jsonText = new String(bytes, charset);
-
-                // Read string as JSON.
-                return new JSONArray(jsonText);
-            } finally {
-                urlConnection.disconnect();
-            }
-        }
 
         /**
          * Returns the charset specified in the Content-Type of this header,
@@ -149,6 +124,11 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             return "UTF-8";
+        }
+
+        @Override
+        public void onResultRecieved(JSONArray array) {
+            mAdapter.setItems(array);
         }
 
         private class MyAdapter extends BaseAdapter {
