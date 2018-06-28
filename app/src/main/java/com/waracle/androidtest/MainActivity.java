@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -94,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
 
             // Create and set the list adapter.
             mAdapter = new MyAdapter();
-            mListView.setAdapter(mAdapter);
+//            mListView.setAdapter(mAdapter);
 
             // Load data from net.
             //try {
@@ -105,38 +107,40 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onResultRecieved(JSONArray array) {
-            mAdapter.setItems(array);
+        public void onResultRecieved(List<Cake> cakeList) {
+            mAdapter.setItems(cakeList);
+            mListView.setAdapter(mAdapter);
         }
+
+        @Override
+        public void onImageRecieved(ImageView imageView) {
+            //TODO either need a handler or need to remove the set call in getView
+        }
+
 
         private class MyAdapter extends BaseAdapter {
 
             // Can you think of a better way to represent these items???
-            private JSONArray mItems;
+            private List<Cake>  mItems;
             private ImageLoader mImageLoader;
 
             public MyAdapter() {
-                this(new JSONArray());
+                this(new ArrayList<Cake>());
             }
 
-            public MyAdapter(JSONArray items) {
+            public MyAdapter(List<Cake> items) {
                 mItems = items;
                 mImageLoader = new ImageLoader();
             }
 
             @Override
             public int getCount() {
-                return mItems.length();
+                return mItems.size();
             }
 
             @Override
             public Object getItem(int position) {
-                try {
-                    return mItems.getJSONObject(position);
-                } catch (JSONException e) {
-                    Log.e("", e.getMessage());
-                }
-                return null;
+                return mItems.get(position);
             }
 
             @Override
@@ -153,20 +157,16 @@ public class MainActivity extends AppCompatActivity {
                     TextView title = (TextView) root.findViewById(R.id.title);
                     TextView desc = (TextView) root.findViewById(R.id.desc);
                     ImageView image = (ImageView) root.findViewById(R.id.image);
-                    try {
-                        JSONObject object = (JSONObject) getItem(position);
-                        title.setText(object.getString("title"));
-                        desc.setText(object.getString("desc"));
-                        mImageLoader.load(object.getString("image"), image);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+                    Cake cakeObject = (Cake)getItem(position);
+                    title.setText(cakeObject.Title);
+                    desc.setText(cakeObject.Description);
+                    mImageLoader.DisplayImage(cakeObject.ImageUrl, image);
                 }
 
                 return root;
             }
 
-            public void setItems(JSONArray items) {
+            public void setItems(List<Cake> items) {
                 mItems = items;
             }
         }
