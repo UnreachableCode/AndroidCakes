@@ -5,12 +5,15 @@ import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import static android.content.ContentValues.TAG;
 
@@ -62,12 +65,31 @@ public class CakeService extends AsyncTask<String, Void, JSONArray> {
     }
 
     protected void onPostExecute(JSONArray result) {
-        // TODO: check this.exception
+        // TODO:
         if (this.exception!=null){
             Log.e(TAG, "onPostExecute: ", exception);
         }
-        // TODO: do something with the feed
-        listener.onResultRecieved(result);
+
+        List<Cake> cakeList = createCakesFromJSON(result);
+        listener.onResultRecieved(cakeList);
+    }
+
+    private List<Cake> createCakesFromJSON(JSONArray array){
+        List<Cake> cakeList = new ArrayList<>();
+        try {
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject json_data = array.getJSONObject(i);
+                Cake cakeObject = new Cake();
+                cakeObject.Title = json_data.getString("title");
+                cakeObject.Description = json_data.getString("desc");
+                cakeObject.ImageUrl = json_data.getString("image");
+                cakeList.add(cakeObject);
+            }
+        }
+        catch (JSONException e) {
+            Log.e(TAG, "createCakesFromJSON: ", e);
+        }
+        return cakeList;
     }
 
     /**

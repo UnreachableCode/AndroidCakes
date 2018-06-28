@@ -1,11 +1,11 @@
 package com.waracle.androidtest;
 
-import org.json.JSONArray;
+import java.util.List;
 
 /**
  * Created by cmf on 27/06/2018.
  */
 
 public interface CakeResultHandler {
-    void onResultRecieved(JSONArray array);
+    void onResultRecieved(List<Cake> cakeList);
 }
