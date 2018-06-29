@@ -2,7 +2,6 @@ package com.waracle.androidtest;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.text.TextUtils;
 import android.util.Log;
 import android.widget.ImageView;
 
@@ -10,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.InvalidParameterException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -24,13 +22,16 @@ public class ImageLoader {
 
     private static final String TAG = ImageLoader.class.getSimpleName();
 
+    private ImageLoadedHandler listener;
+
     private MemoryCache memoryCache;
     private ExecutorService executorService;
     private Map<ImageView, String> imageViews= Collections.synchronizedMap(new WeakHashMap<ImageView, String>());
 
-    public ImageLoader() {
+    public ImageLoader(ImageLoadedHandler listener) {
         memoryCache = new MemoryCache();
         executorService = Executors.newFixedThreadPool(5);
+        this.listener = listener;
     }
 
     /**
@@ -39,21 +40,6 @@ public class ImageLoader {
      * @param url       image url
      * @param imageView view to set image too.
      */
-    public void load(String url, ImageView imageView) {
-        if (TextUtils.isEmpty(url)) {
-            throw new InvalidParameterException("URL is empty!");
-        }
-
-        // Can you think of a way to improve loading of bitmaps
-        // that have already been loaded previously??
-
-        try {
-            setImageView(imageView, convertToBitmap(loadImageData(url)));
-        } catch (IOException e) {
-            Log.e(TAG, e.getMessage());
-        }
-    }
-
     public void DisplayImage(String url, ImageView imageView)
     {
         imageViews.put(imageView, url);
@@ -111,11 +97,10 @@ public class ImageLoader {
                 memoryCache.put(imageToLoad.url, bitmap);
                 if(imageViewReused(imageToLoad))
                     return;
-                //todo: BitmapDisplayer bd=new BitmapDisplayer(bitmap, imageToLoad);
-                setImageView(imageToLoad.imageView, bitmap);
-                //listener.ImageLoaded(bd);
-            }catch(Throwable th){
-                th.printStackTrace();
+                BitmapDisplayer displayerRunnable = new BitmapDisplayer(bitmap, imageToLoad);
+                listener.onImageRecieved(displayerRunnable);
+            } catch(Exception e){
+                Log.e(TAG, e.getMessage());
             }
         }
     }
@@ -127,11 +112,22 @@ public class ImageLoader {
         return false;
     }
 
-    private static Bitmap convertToBitmap(byte[] data) {
-        return BitmapFactory.decodeByteArray(data, 0, data.length);
+    //Display the bitmap in the UI thread.
+    class BitmapDisplayer implements Runnable
+    {
+        Bitmap bitmap;
+        CakeImageToLoad imageToLoad;
+        public BitmapDisplayer(Bitmap b, CakeImageToLoad p){bitmap=b;imageToLoad=p;}
+        public void run()
+        {
+            if(imageViewReused(imageToLoad))
+                return;
+            if(bitmap!=null)
+                imageToLoad.imageView.setImageBitmap(bitmap);
+        }
     }
 
-    private static void setImageView(ImageView imageView, Bitmap bitmap) {
-        imageView.setImageBitmap(bitmap);
+    private static Bitmap convertToBitmap(byte[] data) {
+        return BitmapFactory.decodeByteArray(data, 0, data.length);
     }
 }

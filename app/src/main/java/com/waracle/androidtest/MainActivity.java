@@ -2,6 +2,7 @@ package com.waracle.androidtest;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -73,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
      * Improve any performance issues
      * Use good coding practices to make code more secure
      */
-    public static class PlaceholderFragment extends ListFragment implements CakeResultHandler{
+    public static class PlaceholderFragment extends ListFragment implements CakeResultHandler, ImageLoadedHandler{
 
         private static final String TAG = PlaceholderFragment.class.getSimpleName();
 
@@ -95,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
             super.onActivityCreated(savedInstanceState);
 
             // Create and set the list adapter.
-            mAdapter = new MyAdapter();
+            mAdapter = new MyAdapter(this);
 //            mListView.setAdapter(mAdapter);
 
             // Load data from net.
@@ -113,24 +114,24 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onImageRecieved(ImageView imageView) {
+        public void onImageRecieved(ImageLoader.BitmapDisplayer displayerRunnable) {
             //TODO either need a handler or need to remove the set call in getView
+            getActivity().runOnUiThread(displayerRunnable);
         }
 
 
         private class MyAdapter extends BaseAdapter {
 
-            // Can you think of a better way to represent these items???
             private List<Cake>  mItems;
             private ImageLoader mImageLoader;
 
-            public MyAdapter() {
-                this(new ArrayList<Cake>());
+            public MyAdapter(ImageLoadedHandler handler) {
+                this(new ArrayList<Cake>(), handler);
             }
 
-            public MyAdapter(List<Cake> items) {
+            public MyAdapter(List<Cake> items, ImageLoadedHandler handler) {
                 mItems = items;
-                mImageLoader = new ImageLoader();
+                mImageLoader = new ImageLoader(handler);
             }
 
             @Override
