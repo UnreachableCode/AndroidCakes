@@ -1,11 +1,9 @@
-package com.waracle.androidtest;
+package com.waracle.androidtest.Android.Cake.Views;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,15 +14,13 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.waracle.androidtest.Android.Cake.Services.CakeService;
+import com.waracle.androidtest.Android.Cake.Services.ImageLoader;
+import com.waracle.androidtest.Android.Cake.Models.Cake;
+import com.waracle.androidtest.Android.Cake.Models.CakeResultHandler;
+import com.waracle.androidtest.Android.Cake.Services.ImageLoadedHandler;
+import com.waracle.androidtest.R;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
     /**
      * Fragment is responsible for loading in some JSON and
      * then displaying a list of cakes with images.
@@ -74,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
      * Improve any performance issues
      * Use good coding practices to make code more secure
      */
-    public static class PlaceholderFragment extends ListFragment implements CakeResultHandler, ImageLoadedHandler{
+    public static class PlaceholderFragment extends ListFragment implements CakeResultHandler, ImageLoadedHandler {
 
         private static final String TAG = PlaceholderFragment.class.getSimpleName();
 

@@ -1,4 +1,4 @@
-package com.waracle.androidtest;
+package com.waracle.androidtest.Android.Cake.Models;
 
 /**
  * Created by cmf on 27/06/2018.

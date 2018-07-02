@@ -1,4 +1,6 @@
-package com.waracle.androidtest;
+package com.waracle.androidtest.Android.Cake.Services;
+
+import com.waracle.androidtest.Android.Cake.Models.Cake;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.waracle.androidtest;
+package com.waracle.androidtest.Android.Cake.Models;
 
 import android.widget.ImageView;
 
