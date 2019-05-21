@@ -1,10 +1,9 @@
-package com.waracle.androidtest;
+package com.waracle.androidtest.Android.Cake.Views;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,15 +14,15 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.waracle.androidtest.Android.Cake.Services.CakeService;
+import com.waracle.androidtest.Android.Cake.Services.ImageLoader;
+import com.waracle.androidtest.Android.Cake.Models.Cake;
+import com.waracle.androidtest.Android.Cake.Models.CakeResultHandler;
+import com.waracle.androidtest.Android.Cake.Services.ImageLoadedHandler;
+import com.waracle.androidtest.R;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -64,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
     /**
      * Fragment is responsible for loading in some JSON and
      * then displaying a list of cakes with images.
@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
      * Improve any performance issues
      * Use good coding practices to make code more secure
      */
-    public static class PlaceholderFragment extends ListFragment {
+    public static class PlaceholderFragment extends ListFragment implements CakeResultHandler, ImageLoadedHandler {
 
         private static final String TAG = PlaceholderFragment.class.getSimpleName();
 
@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            mListView = (ListView) rootView.findViewById(R.id.list);
+            mListView = (ListView)rootView.findViewById(android.R.id.list);
             return rootView;
         }
 
@@ -93,92 +93,52 @@ public class MainActivity extends AppCompatActivity {
             super.onActivityCreated(savedInstanceState);
 
             // Create and set the list adapter.
-            mAdapter = new MyAdapter();
-            mListView.setAdapter(mAdapter);
+            mAdapter = new MyAdapter(this);
+//            mListView.setAdapter(mAdapter);
 
             // Load data from net.
-            try {
-                JSONArray array = loadData();
-                mAdapter.setItems(array);
-            } catch (IOException | JSONException e) {
-                Log.e(TAG, e.getMessage());
-            }
+            //try {
+                new CakeService(this).execute(JSON_URL);
+            //} catch (IOException | JSONException e) {
+            //    Log.e(TAG, e.getMessage());
+            //}
         }
 
-
-        private JSONArray loadData() throws IOException, JSONException {
-            URL url = new URL(JSON_URL);
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            try {
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-
-                // Can you think of a way to improve the performance of loading data
-                // using HTTP headers???
-
-                // Also, Do you trust any utils thrown your way????
-
-                byte[] bytes = StreamUtils.readUnknownFully(in);
-
-                // Read in charset of HTTP content.
-                String charset = parseCharset(urlConnection.getRequestProperty("Content-Type"));
-
-                // Convert byte array to appropriate encoded string.
-                String jsonText = new String(bytes, charset);
-
-                // Read string as JSON.
-                return new JSONArray(jsonText);
-            } finally {
-                urlConnection.disconnect();
-            }
+        @Override
+        public void onResultRecieved(List<Cake> cakeList) {
+            mAdapter.setItems(cakeList);
+            mListView.setAdapter(mAdapter);
         }
 
-        /**
-         * Returns the charset specified in the Content-Type of this header,
-         * or the HTTP default (ISO-8859-1) if none can be found.
-         */
-        public static String parseCharset(String contentType) {
-            if (contentType != null) {
-                String[] params = contentType.split(",");
-                for (int i = 1; i < params.length; i++) {
-                    String[] pair = params[i].trim().split("=");
-                    if (pair.length == 2) {
-                        if (pair[0].equals("charset")) {
-                            return pair[1];
-                        }
-                    }
-                }
-            }
-            return "UTF-8";
+        @Override
+        public void onImageRecieved(ImageLoader.BitmapDisplayer displayerRunnable) {
+            //TODO either need a handler or need to remove the set call in getView
+            getActivity().runOnUiThread(displayerRunnable);
         }
+
 
         private class MyAdapter extends BaseAdapter {
 
-            // Can you think of a better way to represent these items???
-            private JSONArray mItems;
+            private List<Cake>  mItems;
             private ImageLoader mImageLoader;
 
-            public MyAdapter() {
-                this(new JSONArray());
+            public MyAdapter(ImageLoadedHandler handler) {
+                this(new ArrayList<Cake>(), handler);
             }
 
-            public MyAdapter(JSONArray items) {
+            public MyAdapter(List<Cake> items, ImageLoadedHandler handler) {
                 mItems = items;
-                mImageLoader = new ImageLoader();
+                mImageLoader = new ImageLoader(handler);
             }
 
             @Override
             public int getCount() {
-                return mItems.length();
+                return mItems.size();
             }
 
             @Override
             public Object getItem(int position) {
-                try {
-                    return mItems.getJSONObject(position);
-                } catch (JSONException e) {
-                    Log.e("", e.getMessage());
-                }
-                return null;
+                return mItems.get(position);
             }
 
             @Override
@@ -195,20 +155,16 @@ public class MainActivity extends AppCompatActivity {
                     TextView title = (TextView) root.findViewById(R.id.title);
                     TextView desc = (TextView) root.findViewById(R.id.desc);
                     ImageView image = (ImageView) root.findViewById(R.id.image);
-                    try {
-                        JSONObject object = (JSONObject) getItem(position);
-                        title.setText(object.getString("title"));
-                        desc.setText(object.getString("desc"));
-                        mImageLoader.load(object.getString("image"), image);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+                    Cake cakeObject = (Cake)getItem(position);
+                    title.setText(cakeObject.Title);
+                    desc.setText(cakeObject.Description);
+                    mImageLoader.DisplayImage(cakeObject.ImageUrl, image);
                 }
 
                 return root;
             }
 
-            public void setItems(JSONArray items) {
+            public void setItems(List<Cake> items) {
                 mItems = items;
             }
         }
